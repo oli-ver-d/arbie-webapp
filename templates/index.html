@@ -1,0 +1,114 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+{% if games is defined %}
+    <div>
+        <label for="stake">Enter your stake:</label>
+        <div style="position: relative; display: inline-block;">
+            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #FFF;">$</span>
+            <input type="number" id="stake" value="100" style="padding-left: 20px;">
+        </div>
+    </div>
+    <h2>Opportunities</h2>
+    {% for game in games %}
+    <div class="box" date-game-index="{{ loop.index }}">
+        <dl>
+            <dt>Sport</dt>
+            <dd>{{ game.game_type }}</dd>
+            <dt>Match</dt>
+            <dd>{{ game.match }}</dd>
+            <dt>Odds</dt>
+            <dd>
+                <dl>
+                    <dt>1</dt>
+                    <dd>
+                        <div>Sitename: {{ game.odds["1"].sitename }}</div>
+                        <div>
+                            <span>Odd: </span>
+                            <span id="odds1_{{ loop.index }}">{{ game.odds["1"].odds }}</span>
+                        </div>
+                        <div>
+                            <span>Stake: </span>
+                            <span id="stake1_{{ loop.index }}"></span>
+                        </div>
+                    </dd>
+                    <dt>x</dt>
+                    <dd>
+                        <div>Sitename: {{ game.odds["x"].sitename }}</div>
+                        <div>
+                            <span>Odd: </span>
+                            <span id="oddsx_{{ loop.index }}">{{ game.odds["x"].odds }}</span>
+                        </div>
+                        <div>
+                            <span>Stake: </span>
+                            <span id="stakex_{{ loop.index }}"></span>
+                        </div>
+                    </dd>
+                    <dt>2</dt>
+                    <dd>
+                        <div>Sitename: {{ game.odds["2"].sitename }}</div>
+                        <div>
+                            <span>Odd: </span>
+                            <span id="odds2_{{ loop.index }}">{{ game.odds["2"].odds }}</span>
+                        </div>
+                        <div>
+                            <span>Stake: </span>
+                            <span id="stake2_{{ loop.index }}"></span>
+                        </div>
+                    </dd>
+                </dl>
+            </dd>
+            <dt>Profit</dt>
+            <dd>
+                <span id="profit_{{ loop.index }}"></span>
+            </dd>
+        </dl>
+        <dl>
+            <dt>Scanned at</dt>
+            <dd>{{ timestamp }}</dd>
+        </dl>
+        <a href="{{ game.url }}">Match on betexplorer</a>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="box">
+        No Games to display at the moment.
+    </div>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const stakeInput = document.getElementById('stake');
+
+        function calculateStakes() {
+            const stake = parseFloat(stakeInput.value);
+
+            const gameBoxes = document.querySelectorAll('.box');
+
+            gameBoxes.forEach(function (box) {
+                const gameIndex = parseInt(box.getAttribute('date-game-index'));
+                const odds1 = parseFloat(document.getElementById(`odds1_${gameIndex}`).textContent);
+                const oddsx = parseFloat(document.getElementById(`oddsx_${gameIndex}`).textContent);
+                const odds2 = parseFloat(document.getElementById(`odds2_${gameIndex}`).textContent);
+                if (!isNaN(stake) && stake >= 0) {
+                    const stake1 = (stake * (1 / odds1)) / ((1 / odds1) + (1 / oddsx) + (1 / odds2));
+                    const stakex = (stake * (1 / oddsx)) / ((1 / odds1) + (1 / oddsx) + (1 / odds2));
+                    const stake2 = (stake * (1 / odds2)) / ((1 / odds1) + (1 / oddsx) + (1 / odds2));
+
+                    document.getElementById(`stake1_${gameIndex}`).textContent = "$ " + stake1.toFixed(2);
+                    document.getElementById(`stakex_${gameIndex}`).textContent = "$ " + stakex.toFixed(2);
+                    document.getElementById(`stake2_${gameIndex}`).textContent = "$ " + stake2.toFixed(2);
+
+                    const profit = (stake1 * odds1).toFixed(2);
+                    document.getElementById(`profit_${gameIndex}`).textContent = `$ ${profit}`
+                }
+            });
+        }
+
+        stakeInput.addEventListener('input', calculateStakes);
+        calculateStakes();
+    });
+</script>
+
+{% endblock %}
